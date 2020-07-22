@@ -54,6 +54,9 @@ class mul_task_loss(object):
     def ae_loss(self, tag0, tag1, masks):
         num  = masks.sum(dim=1, keepdim=True).unsqueeze(1).expand_as(tag0)
 
+        """
+        同一个框的角点距离要拉近，不同box的角点的距离要拉大
+        """
         masks = masks.unsqueeze(2)
         tag_mean = (tag0 + tag1) / 2 
         tag0 = torch.pow(tag0 - tag_mean, 2) / (num + 1e-4)
@@ -83,7 +86,7 @@ class mul_task_loss(object):
         tl_tags = targets[2].long()
         br_tags = targets[3].long()
         
-        ## heatmaps
+        ## heatmaps loss
         heat_maps_tl = outpus[0]
         heat_maps_br = outpus[1]
         heat_maps_tl_gt = targets[0]
@@ -97,7 +100,7 @@ class mul_task_loss(object):
         
    
                      
-         ######offsets
+         ######offsets loss
         offsets_tl = outpus[4] 
         offsets_br = outpus[5]
         offsets_tl = tranpose_and_gather_feat(outpus[4], tl_tags) 
@@ -107,7 +110,7 @@ class mul_task_loss(object):
         offsets_loss = self.regr_loss(offsets_tl,offsets_tl_gt,masks)*self.regr_weight + \
                         self.regr_loss(offsets_br,offsets_br_gt,masks)*self.regr_weight
                         
-        ####embeddings
+        ####embeddings loss
         embeddings_tl = outpus[2] 
         embeddings_br = outpus[3]
         tags_tl = tranpose_and_gather_feat(embeddings_tl,tl_tags) 
